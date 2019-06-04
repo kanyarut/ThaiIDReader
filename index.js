@@ -38,6 +38,7 @@ class ThaiIDReader {
 
 	async read(cb,errorcb){
 		this.cb = cb;
+		this.errorcb = errorcb;
 	    this.pcsc = pcsclite()
 		this.pcsc.on('reader', (reader)=>this.onReader(reader))
 		this.pcsc.on('error', (err)=>this.onPcscError(err))
