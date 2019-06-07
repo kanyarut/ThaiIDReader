@@ -15,10 +15,21 @@ const _EXPIRE  = [0x80, 0xb0, 0x01, 0x6F, 0x02, 0x00, 0x08]
 const _ADDRESS  = [0x80, 0xb0, 0x15, 0x79, 0x02, 0x00, 0x64]
 
 class ThaiIDReader {
+	constructor() {	
+		this.read = this.read.bind(this)
+	    this.onReader = this.onReader.bind(this)
+	    this.readData = this.readData.bind(this)
+	    this.sendCommand = this.sendCommand.bind(this)
+	    this.transmit = this.transmit.bind(this)
+	    this.readerExit = this.readerExit.bind(this)
+	    this.pcscExit = this.pcscExit.bind(this)
+	}
+		
     onReader(reader){
         this.reader = reader;
         this.reader.connect((err, protocol) => {
             if (err) {
+				//console.log(err)
                 this.errorcb(err)
                 return this.readerExit();
             }
@@ -30,8 +41,11 @@ class ThaiIDReader {
         this.cb = cb;
         this.errorcb = errorcb;
         this.pcsc = pcsclite()
-        this.pcsc.on('reader', (reader)=>this.onReader(reader))
-        this.pcsc.on('error', (err)=>this.onPcscError(err))
+		var openTimeout = setTimeout(()=>{
+			this.onPcscError("No Reader Found");
+		},3000);
+        this.pcsc.on('reader', (reader)=>{clearTimeout(openTimeout); this.onReader(reader)})
+        this.pcsc.on('error', (err)=>{clearTimeout(openTimeout); this.onPcscError(err)})
     }
 
      async readData (protocol) {
@@ -93,6 +107,7 @@ class ThaiIDReader {
     }
 
     onPcscError(err){
+		//console.log(err)
         this.errorcb(err)
         this.pcscExit();
     }
