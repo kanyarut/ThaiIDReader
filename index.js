@@ -139,8 +139,8 @@ class ThaiIDReader {
             try {
                 this.reader.disconnect(()=>{
                     console.log('closing')
-                    this.reader.close();
-                    this.pcscExit();
+                    //this.reader.close();
+                    //this.pcscExit();
                 });
             } catch {
 
