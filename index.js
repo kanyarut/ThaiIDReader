@@ -39,7 +39,7 @@ class ThaiIDReader {
             if (changes) {
                 if ((changes & this.reader.SCARD_STATE_EMPTY) && (status.state & this.reader.SCARD_STATE_EMPTY)) {
                     this.errorcb('Card removed')
-                    this.readerExit();
+                    this.readerExit(true);
                 } else if ((changes & this.reader.SCARD_STATE_PRESENT) && (status.state & this.reader.SCARD_STATE_PRESENT)) {
                     // detect corrupt card and change select apdu
                     if (status.atr[0] == 0x3B && status.atr[1] == 0x67) { _SELECT = _SELECT2;}
@@ -132,14 +132,11 @@ class ThaiIDReader {
         this.pcscExit();
     }
 
-    readerExit(){
-        console.log('exiting')
+    readerExit(empty){
         if(this.reader) {
-            console.log('disconnecting')
             try {
                 this.reader.disconnect(()=>{
-                    console.log('closing')
-                    //this.reader.close();
+                    if(!empty)this.reader.close();
                     this.pcscExit();
                 });
             } catch {
@@ -150,7 +147,6 @@ class ThaiIDReader {
 
     pcscExit(){
         if(this.pcsc) {
-            console.log('pcscing')
             this.pcsc.close();
         }
     }
