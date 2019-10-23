@@ -19,6 +19,9 @@ const _EXPIRE  = [0x80, 0xb0, 0x01, 0x6F, 0x02, 0x00, 0x08]
 const _ADDRESS  = [0x80, 0xb0, 0x15, 0x79, 0x02, 0x00, 0x64]
 
 class ThaiIDReader {
+    reader = null;
+    pcsc = null;
+
 	constructor() {	
 		this.read = this.read.bind(this)
 	    this.onReader = this.onReader.bind(this)
@@ -130,16 +133,26 @@ class ThaiIDReader {
     }
 
     readerExit(){
+        console.log('exiting')
         if(this.reader) {
-            this.reader.disconnect(()=>{
-                this.reader.close();
-                this.pcscExit();
-            });
+            console.log('disconnecting')
+            try {
+                this.reader.disconnect(()=>{
+                    console.log('closing')
+                    this.reader.close();
+                    this.pcscExit();
+                });
+            } catch {
+
+            }
         }
     }
 
     pcscExit(){
-        if(this.pcsc)this.pcsc.close();
+        if(this.pcsc) {
+            console.log('pcscing')
+            this.pcsc.close();
+        }
     }
 }
 module.exports = ThaiIDReader
