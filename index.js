@@ -130,14 +130,16 @@ class ThaiIDReader {
     }
 
     readerExit(){
-        this.reader.disconnect(()=>{
-            this.reader.close();
-            this.pcscExit();
-        });
+        if(this.reader) {
+            this.reader.disconnect(()=>{
+                this.reader.close();
+                this.pcscExit();
+            });
+        }
     }
 
     pcscExit(){
-        this.pcsc.close();
+        if(this.pcsc)this.pcsc.close();
     }
 }
 module.exports = ThaiIDReader
