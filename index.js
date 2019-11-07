@@ -2,11 +2,7 @@ var pcsclite = require('pcsclite');
 
 // command list
 const _INIT_SELECT = [0x00, 0xA4, 0x04, 0x00, 0x08, 0xA0, 0x00, 0x00, 0x00, 0x54, 0x48, 0x00, 0x01]
-
-const _SELECT1 = [0x00, 0xC0, 0x00, 0x00]
-const _SELECT2 = [0x00, 0xc0, 0x00, 0x01]
-
-let _SELECT = _SELECT1;
+const _SELECT = [0x00, 0xC0, 0x00, 0x00]
 
 const _CID  = [0x80, 0xb0, 0x00, 0x04, 0x02, 0x00, 0x0d]
 const _THFULLNAME  = [0x80, 0xb0, 0x00, 0x11, 0x02, 0x00, 0x64]
@@ -19,9 +15,6 @@ const _EXPIRE  = [0x80, 0xb0, 0x01, 0x6F, 0x02, 0x00, 0x08]
 const _ADDRESS  = [0x80, 0xb0, 0x15, 0x79, 0x02, 0x00, 0x64]
 
 class ThaiIDReader {
-    reader = null;
-    pcsc = null;
-
 	constructor() {	
 		this.read = this.read.bind(this)
 	    this.onReader = this.onReader.bind(this)
@@ -34,24 +27,9 @@ class ThaiIDReader {
 		
     onReader(reader){
         this.reader = reader;
-        this.reader.on('status', (status) => {
-            var changes = this.reader.state ^ status.state;
-            if (changes) {
-                if ((changes & this.reader.SCARD_STATE_EMPTY) && (status.state & this.reader.SCARD_STATE_EMPTY)) {
-                    this.errorcb('Card removed')
-                    this.readerExit(true);
-                } else if ((changes & this.reader.SCARD_STATE_PRESENT) && (status.state & this.reader.SCARD_STATE_PRESENT)) {
-                    // detect corrupt card and change select apdu
-                    if (status.atr[0] == 0x3B && status.atr[1] == 0x67) { _SELECT = _SELECT2;}
-                    this.onCardInsert();
-                }
-            }
-        });
-    }
-
-    onCardInsert() {
         this.reader.connect((err, protocol) => {
             if (err) {
+				//console.log(err)
                 this.errorcb(err)
                 return this.readerExit();
             }
@@ -63,10 +41,10 @@ class ThaiIDReader {
         this.cb = cb;
         this.errorcb = errorcb;
         this.pcsc = pcsclite()
-
-        let openTimeout = setTimeout(()=>{ this.onPcscError("No Reader Found"); },3000);
-        
-        this.pcsc.on('reader', (reader)=>{ clearTimeout(openTimeout); this.onReader(reader); })
+		var openTimeout = setTimeout(()=>{
+			this.onPcscError("No Reader Found");
+		},3000);
+        this.pcsc.on('reader', (reader)=>{clearTimeout(openTimeout); this.onReader(reader)})
         this.pcsc.on('error', (err)=>{clearTimeout(openTimeout); this.onPcscError(err)})
     }
 
@@ -93,6 +71,7 @@ class ThaiIDReader {
         for(let i in commands) {
             data = await this.transmit( commands[i], protocol)
         }
+        //console.log(commands)
         return this.hex2string(data.toString('hex'))
     }
 
@@ -128,27 +107,20 @@ class ThaiIDReader {
     }
 
     onPcscError(err){
+		//console.log(err)
         this.errorcb(err)
         this.pcscExit();
     }
 
-    readerExit(empty){
-        if(this.reader) {
-            try {
-                this.reader.disconnect(()=>{
-                    if(!empty)this.reader.close();
-                    this.pcscExit();
-                });
-            } catch {
-
-            }
-        }
+    readerExit(){
+        this.reader.disconnect(()=>{
+            this.reader.close();
+            this.pcscExit();
+        });
     }
 
     pcscExit(){
-        if(this.pcsc) {
-            this.pcsc.close();
-        }
+        this.pcsc.close();
     }
 }
 module.exports = ThaiIDReader
